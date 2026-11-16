@@ -2,355 +2,368 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Major+Mono+Display&family=VT323&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Sans+JP:wght@900&display=swap">
 <style>
-/* Layout: una diapositiva a la vez, a pantalla completa; contenido en una rejilla de 12 columnas que se apila en el celular.
-   Motivo: el kanji 積 ("apilar") y bloques que se apilan, como los niveles 0 y 1 del stacking. */
+/* Layout: estética webcore / Wired. Cada diapositiva es una "Layer" de un póster monocromo:
+   retícula CRT, texto de terminal, tramado de puntos y cables. Un solo rojo, reservado para el error. */
 :root {
-  --bg: #F3F5F8;          /* papel frío */
-  --surface: #FFFFFF;
-  --ink: #16213A;         /* tinta índigo */
-  --muted: #5A6478;
-  --line: #D9DEE7;
-  --accent: #D9480F;      /* el juez: mismo naranja del Stacking en el notebook */
-  --accent-soft: #FBE3D7;
-  --base1: #9AA3AD;       /* KNN */
-  --base2: #7C93B0;       /* SVM */
-  --base3: #2B4A6F;       /* Random Forest */
-  --vote: #E0A100;        /* Voting Soft */
-  --easy: #2E7D32; --mid: #C98A00; --hard: #C62828;
-  --neg: #2F6FB0; --pos: #D9480F;
-  --kanji: rgba(22, 33, 58, 0.055);
-  --f-display: "Zen Kaku Gothic New", "Hiragino Sans", "Segoe UI", system-ui, sans-serif;
-  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --void: #050505;        /* fondo: la red */
+  --sheet: #0D0D0C;       /* la hoja del póster */
+  --ink: #EDEDE6;         /* blanco papel */
+  --dim: #8A8A84;         /* texto secundario */
+  --ghost: rgba(237,237,230,.11);  /* texto fantasma de las capas */
+  --rule: rgba(237,237,230,.22);   /* líneas y marcos */
+  --signal: #FF2B2B;      /* error / alerta, se usa una vez */
+  --f-word: "Major Mono Display", "IBM Plex Mono", ui-monospace, monospace;
+  --f-crt: "VT323", "IBM Plex Mono", ui-monospace, monospace;
   --f-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #0F1524; --surface: #172036; --ink: #E8ECF4; --muted: #9AA6BD; --line: #2A3550;
-    --accent: #FF7A3D; --accent-soft: #3A2418;
-    --base1: #8C96A3; --base2: #8FA7C6; --base3: #5C86C0; --vote: #F0B429;
-    --easy: #5BBE63; --mid: #E0A833; --hard: #EF5B5B; --neg: #6FA8E6; --pos: #FF7A3D;
-    --kanji: rgba(232, 236, 244, 0.05);
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #0F1524; --surface: #172036; --ink: #E8ECF4; --muted: #9AA6BD; --line: #2A3550;
-  --accent: #FF7A3D; --accent-soft: #3A2418;
-  --base1: #8C96A3; --base2: #8FA7C6; --base3: #5C86C0; --vote: #F0B429;
-  --easy: #5BBE63; --mid: #E0A833; --hard: #EF5B5B; --neg: #6FA8E6; --pos: #FF7A3D;
-  --kanji: rgba(232, 236, 244, 0.05);
+  --f-jp: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
   color-scheme: dark;
 }
-
 html, body { height: 100%; }
-body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.5; overflow: hidden; }
+body { background: var(--void); color: var(--ink); font-family: var(--f-mono); font-size: 15px; line-height: 1.55; overflow: hidden; }
+
+/* capas de pantalla: retícula de líneas y viñeta */
+.crt::before, .crt::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 30; }
+.crt::before { background: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0 2px, rgba(0,0,0,.28) 2px 3px); mix-blend-mode: multiply; }
+.crt::after { background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.55) 100%); }
+
 .deck { position: relative; height: 100%; }
 .slide {
-  position: absolute; inset: 0; overflow-y: auto;
+  position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
-  padding-block: clamp(28px, 6vh, 64px) 92px;
-  opacity: 0; visibility: hidden; transform: translateY(18px);
-  transition: opacity .55s cubic-bezier(.2,.7,.2,1), transform .55s cubic-bezier(.2,.7,.2,1), visibility 0s linear .55s;
+  padding-block: clamp(18px, 4vh, 40px) 86px;
+  opacity: 0; visibility: hidden;
+  transition: opacity .3s steps(4), visibility 0s linear .3s;
 }
-.slide.active { opacity: 1; visibility: visible; transform: none; transition-delay: 0s; z-index: 1; }
-.slide.before { transform: translateY(-18px); }
-.wrap { max-width: 1120px; margin-inline: auto; min-height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 28px; position: relative; }
-.kanji-bg { position: absolute; right: -2vw; bottom: -6vh; font-family: var(--f-display); font-weight: 900; font-size: clamp(220px, 42vw, 560px); line-height: 1; color: var(--kanji); pointer-events: none; user-select: none; }
+.slide.active { opacity: 1; visibility: visible; transition-delay: 0s; z-index: 1; }
+.slide.active.tuning { animation: tune .32s steps(4) 1; }
+@keyframes tune {
+  0% { clip-path: inset(0 0 70% 0); }
+  25% { clip-path: inset(40% 0 20% 0); transform: translateX(-3px); }
+  50% { clip-path: inset(0 0 0 0); transform: translateX(2px); }
+  100% { clip-path: inset(0 0 0 0); transform: none; }
+}
 
-/* tipografía */
-.eyebrow { font-family: var(--f-mono); font-size: 12.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); display: flex; align-items: center; gap: 10px; }
-.eyebrow::before { content: ""; width: 22px; height: 10px; background: var(--accent); border-radius: 2px; }
-h1, h2 { font-family: var(--f-display); font-weight: 900; text-wrap: balance; margin: 0; letter-spacing: -.01em; }
-h1 { font-size: clamp(38px, 6.4vw, 78px); line-height: 1.04; }
-h2 { font-size: clamp(28px, 4.2vw, 48px); line-height: 1.1; }
-h3 { font-family: var(--f-display); font-weight: 700; font-size: 20px; margin: 0; }
-p { margin: 0; max-width: 62ch; }
-.lead { font-size: clamp(17px, 1.6vw, 21px); color: var(--muted); }
-.lead strong, p strong { color: var(--ink); }
-.mono { font-family: var(--f-mono); }
-.num { font-variant-numeric: tabular-nums; }
-.accent { color: var(--accent); }
+/* la hoja del póster */
+.sheet { position: relative; max-width: 1180px; min-height: 100%; margin-inline: auto; border: 1px solid var(--rule); background: var(--sheet);
+  display: grid; grid-template-columns: minmax(0, 1fr) 210px; }
+@media (max-width: 900px) { .sheet { grid-template-columns: minmax(0, 1fr); } .rail { display: none; } }
+.main { padding: clamp(18px, 3.4vw, 44px); display: flex; flex-direction: column; justify-content: center; gap: 22px; min-width: 0; position: relative; }
+.rail { border-left: 1px solid var(--rule); padding: 18px 14px; font-family: var(--f-mono); font-size: 11.5px; color: var(--ghost); overflow: hidden; display: flex; flex-direction: column; gap: 2px; white-space: nowrap; }
+.rail .on { color: var(--ink); }
+.rail .on::before { content: "▶ "; }
 
-/* rejillas */
-.grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 24px; align-items: start; }
-.c4 { grid-column: span 4; } .c5 { grid-column: span 5; } .c6 { grid-column: span 6; } .c7 { grid-column: span 7; } .c8 { grid-column: span 8; } .c12 { grid-column: span 12; }
-.grid > * { min-width: 0; }
-@media (max-width: 860px) { .grid > * { grid-column: span 12; } }
+/* cabecera de capa */
+.layer { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--rule); padding-bottom: 8px;
+  font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
+.layer b { color: var(--ink); font-weight: 600; }
+.layer .id { font-family: var(--f-crt); font-size: 20px; letter-spacing: .06em; color: var(--ink); text-transform: none; }
 
-.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 22px; }
+h1, h2 { margin: 0; font-weight: 400; text-wrap: balance; }
+h2 { font-family: var(--f-mono); font-weight: 600; font-size: clamp(22px, 3.2vw, 38px); line-height: 1.12; letter-spacing: -.01em; }
+h2 .cursor { display: inline-block; width: .55em; height: .95em; background: var(--ink); vertical-align: -.1em; margin-left: .12em; animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+h3 { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+p { margin: 0; max-width: 66ch; }
+.lead { font-size: clamp(15px, 1.35vw, 17px); color: var(--dim); }
+.lead b, p b { color: var(--ink); font-weight: 600; }
+.note { font-size: 12px; color: var(--dim); letter-spacing: .04em; }
+.note::before { content: "// "; }
 
 /* portada */
-.cover h1 .stack-word { color: var(--accent); }
-.authors { display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 15px; color: var(--muted); }
-.authors b { color: var(--ink); font-weight: 600; }
-.stamp { font-family: var(--f-display); font-weight: 900; color: var(--accent); border: 3px solid var(--accent); border-radius: 8px; padding: 6px 12px 8px; font-size: 26px; line-height: 1; transform: rotate(-4deg); display: inline-block; }
+.cover-grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 28px; align-items: center; }
+.cover-grid > * { min-width: 0; }
+.crew b { overflow-wrap: anywhere; }
+@media (max-width: 760px) { .cover-grid { grid-template-columns: minmax(0, 1fr); } }
+.kicker { font-size: 13px; letter-spacing: .32em; text-transform: lowercase; color: var(--dim); }
+.word { font-family: var(--f-word); font-size: clamp(44px, 6vw, 84px); line-height: .9; letter-spacing: -.02em; position: relative; display: inline-block; }
+.word::before, .word::after { content: attr(data-text); position: absolute; inset: 0; pointer-events: none; opacity: 0; }
+.word::before { color: var(--ink); clip-path: inset(0 0 62% 0); animation: glitch 5.5s steps(1) infinite; }
+.word::after { color: var(--ink); clip-path: inset(58% 0 0 0); animation: glitch 5.5s steps(1) infinite reverse; }
+@keyframes glitch { 0%, 92%, 100% { transform: translateX(0); opacity: 0; } 93% { transform: translateX(-6px); opacity: .6; } 95% { transform: translateX(7px); opacity: .5; } 97% { transform: translateX(-2px); opacity: .4; } }
+.sub { font-size: clamp(16px, 1.7vw, 20px); color: var(--ink); max-width: 36ch; }
+.lvls { display: flex; gap: 8px; flex-wrap: wrap; }
+.tag { border: 1px solid var(--ink); padding: 1px 8px; font-size: 13px; }
+.tag.inv { background: var(--ink); color: var(--sheet); }
+.tag.dash { border-style: dashed; }
+.crew { display: grid; gap: 2px; font-size: 13.5px; }
+.crew span { color: var(--dim); }
+.crew b { color: var(--ink); font-weight: 500; }
 
-/* bloques apilados (motivo) */
-.levels { display: flex; flex-direction: column; gap: 10px; }
-.lvl { display: grid; grid-template-columns: 92px 1fr; gap: 14px; align-items: center; }
-.lvl .tag { font-family: var(--f-mono); font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
-.blocks { display: flex; gap: 10px; flex-wrap: wrap; }
-.blk { flex: 1 1 120px; border-radius: 8px; padding: 14px 16px; color: #fff; font-weight: 600; font-size: 15px; }
-.blk small { display: block; font-weight: 400; opacity: .9; font-size: 12.5px; font-family: var(--f-mono); }
-.blk.knn { background: var(--base1); } .blk.svm { background: var(--base2); } .blk.rf { background: var(--base3); }
-.blk.meta { background: var(--accent); }
-.blk.data { background: transparent; color: var(--ink); border: 1.5px dashed var(--line); }
-.blk.out { background: var(--surface); color: var(--ink); border: 1px solid var(--line); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-.arrow-down { text-align: center; color: var(--muted); font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; }
+/* kanji en tramado de puntos */
+.halftone { font-family: var(--f-jp); font-weight: 900; line-height: 1.15; text-align: center; user-select: none;
+  font-size: clamp(150px, 18vw, 240px);
+  background: radial-gradient(circle, var(--ink) 38%, transparent 42%) 0 0 / 7px 7px;
+  -webkit-background-clip: text; background-clip: text; color: transparent; }
+.halftone-box { border: 1px solid var(--rule); position: relative; padding: 8px 8px 30px; overflow: hidden; }
+.halftone-box .cap { position: absolute; left: 10px; right: 10px; bottom: 8px; display: flex; justify-content: space-between; font-size: 11px; color: var(--dim); letter-spacing: .1em; }
 
-.pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 3px 10px; font-size: 13px; font-weight: 600; }
-.pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
-.pill.easy { color: var(--easy); background: color-mix(in srgb, var(--easy) 14%, transparent); }
-.pill.mid { color: var(--mid); background: color-mix(in srgb, var(--mid) 16%, transparent); }
-.pill.hard { color: var(--hard); background: color-mix(in srgb, var(--hard) 14%, transparent); }
-.slide { overflow-x: hidden; }
-.lvl > * { min-width: 0; }
-@media (max-width: 640px) {
-  .lvl { grid-template-columns: 1fr; gap: 6px; }
-  .blk { flex-basis: 100%; }
-  .heat { grid-template-columns: 92px repeat(3, minmax(0, 1fr)); }
-  .heat .cell { font-size: 15px; padding: 12px 4px; }
-}
+/* cifras CRT */
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--rule); }
+.stats > div { padding: 14px; border-right: 1px solid var(--rule); min-width: 0; }
+.stats > div:last-child { border-right: 0; }
+@media (max-width: 760px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .stats > div:nth-child(2) { border-right: 0; } .stats > div:nth-child(-n+2) { border-bottom: 1px solid var(--rule); } }
+.crt-n { font-family: var(--f-crt); font-size: clamp(44px, 5.6vw, 72px); line-height: .85; font-variant-numeric: tabular-nums; }
+.stats .l { font-size: 12.5px; color: var(--dim); margin-top: 6px; }
 
-/* cifras grandes */
-.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
-@media (max-width: 860px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.stat { border-top: 3px solid var(--ink); padding-top: 10px; }
-.stat .v { font-family: var(--f-display); font-weight: 900; font-size: clamp(30px, 4vw, 46px); line-height: 1; font-variant-numeric: tabular-nums; }
-.stat .l { color: var(--muted); font-size: 14px; margin-top: 6px; }
+.grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 22px; align-items: start; }
+.c5 { grid-column: span 5; } .c6 { grid-column: span 6; } .c7 { grid-column: span 7; }
+.grid > * { min-width: 0; }
+@media (max-width: 860px) { .grid > * { grid-column: span 12; } }
+.box { border: 1px solid var(--rule); padding: 16px; }
+.box.hot { border-color: var(--ink); box-shadow: 4px 4px 0 var(--ghost); }
 
-/* comparación democracia / meritocracia */
+/* comparación de pesos */
 .vs { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
-@media (max-width: 860px) { .vs { grid-template-columns: 1fr; } }
-.vs .panel h3 { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
-.vs .panel h3 span { font-family: var(--f-mono); font-size: 12px; color: var(--muted); font-weight: 400; letter-spacing: .08em; text-transform: uppercase; }
-.weights { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
-.w { display: grid; grid-template-columns: 112px 1fr 48px; gap: 10px; align-items: center; font-size: 14px; }
-.w .track { height: 14px; background: var(--line); border-radius: 3px; overflow: hidden; }
-.w .fill { height: 100%; border-radius: 3px; transform-origin: left; }
-.w .val { font-family: var(--f-mono); font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; }
+@media (max-width: 760px) { .vs { grid-template-columns: 1fr; } }
+.vs h3 { display: flex; justify-content: space-between; gap: 8px; }
+.w { display: grid; grid-template-columns: 112px 1fr 52px; gap: 10px; align-items: center; font-size: 13.5px; margin-top: 9px; }
+.track { height: 14px; border: 1px solid var(--rule); position: relative; }
+.bfill { position: absolute; inset: 0 auto 0 0; transform-origin: left; }
+.hatch { background: repeating-linear-gradient(135deg, var(--ink) 0 2px, transparent 2px 6px); }
+.dots { background: radial-gradient(circle, var(--ink) 35%, transparent 40%) 0 0 / 5px 5px; }
+.solid { background: var(--ink); }
+.w .v { text-align: right; font-variant-numeric: tabular-nums; }
+@media (max-width: 520px) { .w { grid-template-columns: 92px 1fr 44px; } }
 
-/* tabla */
+/* diagrama de capas con cables */
+.wire-wrap { position: relative; }
+.stack { display: grid; gap: 30px; position: relative; z-index: 1; }
+.row { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 14px; align-items: center; }
+@media (max-width: 640px) { .row { grid-template-columns: minmax(0, 1fr); gap: 6px; } }
+.row .lab { font-family: var(--f-crt); font-size: 19px; color: var(--dim); }
+.nodes { display: flex; gap: 12px; flex-wrap: wrap; }
+.node { flex: 1 1 140px; border: 1px solid var(--ink); background: var(--sheet); padding: 10px 12px; font-size: 14px; }
+.node small { display: block; color: var(--dim); font-size: 12px; }
+.node.judge { background: var(--ink); color: var(--sheet); }
+.node.judge small { color: #3a3a37; }
+.node.dash { border-style: dashed; border-color: var(--dim); }
+.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; overflow: visible; }
+.wires path { fill: none; stroke: var(--dim); stroke-width: 1; stroke-dasharray: 4 4; animation: flow 1.2s linear infinite; }
+@keyframes flow { to { stroke-dashoffset: -16; } }
+
+/* tablas */
 .tbl-wrap { overflow-x: auto; }
-table { border-collapse: collapse; width: 100%; font-size: 15px; font-variant-numeric: tabular-nums; }
-th { text-align: left; font-family: var(--f-mono); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 500; padding: 8px 10px; border-bottom: 1.5px solid var(--ink); white-space: nowrap; }
-td { padding: 10px; border-bottom: 1px solid var(--line); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
+th { text-align: left; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 500; padding: 7px 9px; border-bottom: 1px solid var(--ink); white-space: nowrap; }
+td { padding: 9px; border-bottom: 1px dashed var(--rule); }
 td.n, th.n { text-align: right; }
-tr.win td { font-weight: 600; background: var(--accent-soft); }
-.sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 8px; vertical-align: 0; }
+tr.win td { background: var(--ink); color: var(--sheet); font-weight: 600; }
 
-/* barras horizontales */
-.bars { display: flex; flex-direction: column; gap: 12px; }
-.bar { display: grid; grid-template-columns: 130px 1fr 60px; gap: 12px; align-items: center; }
-.bar .name { font-size: 15px; }
-.bar .track { position: relative; height: 26px; }
-.bar .fill { position: absolute; inset: 0 auto 0 0; border-radius: 4px; transform-origin: left; }
-.bar .val { font-family: var(--f-mono); font-size: 14px; text-align: right; font-variant-numeric: tabular-nums; }
-.bar.win .name, .bar.win .val { font-weight: 600; color: var(--accent); }
-.axis-note { font-size: 13px; color: var(--muted); font-family: var(--f-mono); }
-@media (max-width: 520px) { .bar { grid-template-columns: 96px 1fr 52px; } .w { grid-template-columns: 92px 1fr 44px; } }
-
-/* animación: las barras crecen al entrar a la diapositiva (su estado de reposo es el valor final) */
-.slide.active .grow { animation: grow .9s cubic-bezier(.2,.7,.2,1) both; }
-.slide.active .grow:nth-child(2) { animation-delay: .06s; }
-@keyframes grow { from { transform: scaleX(.04); } to { transform: scaleX(1); } }
+/* barras */
+.bars { display: grid; gap: 10px; }
+.bar { display: grid; grid-template-columns: 124px 1fr 58px; gap: 10px; align-items: center; font-size: 14px; }
+.bar .track { height: 22px; }
+.bar .v { text-align: right; font-variant-numeric: tabular-nums; }
+.bar.win { font-weight: 600; }
+@media (max-width: 520px) { .bar { grid-template-columns: 94px 1fr 50px; } }
+.slide.active .grow { animation: grow .8s steps(10) both; }
+@keyframes grow { from { transform: scaleX(.05); } to { transform: scaleX(1); } }
 
 /* mapa de pesos */
-.heat { display: grid; grid-template-columns: 110px repeat(3, minmax(0, 1fr)); gap: 6px; }
-.heat .h { font-family: var(--f-mono); font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; padding: 4px 6px; }
-.heat .rowh { font-weight: 600; font-size: 14px; display: flex; align-items: center; }
-.heat .cell { border-radius: 6px; padding: 14px 8px; text-align: center; font-family: var(--f-mono); font-size: 18px; font-weight: 500; font-variant-numeric: tabular-nums; color: var(--ink); }
+.heat { display: grid; grid-template-columns: 104px repeat(3, minmax(0, 1fr)); gap: 4px; }
+.heat .h { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); padding: 4px; }
+.heat .r { display: flex; align-items: center; font-size: 13.5px; }
+.heat .cell { border: 1px solid var(--rule); padding: 12px 4px; text-align: center; font-family: var(--f-crt); font-size: 26px; line-height: 1; font-variant-numeric: tabular-nums; }
+.heat .cell.top { background: var(--ink); color: var(--sheet); }
+@media (max-width: 520px) { .heat { grid-template-columns: 86px repeat(3, minmax(0, 1fr)); } .heat .cell { font-size: 21px; } }
 
 /* código */
-pre.code { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; font-family: var(--f-mono); font-size: 14px; line-height: 1.65; overflow-x: auto; color: var(--ink); }
-.code .k { color: var(--base3); font-weight: 500; } .code .c { color: var(--muted); } .code .s { color: var(--accent); }
+pre.code { margin: 0; border: 1px solid var(--rule); padding: 16px; font-size: 13.5px; line-height: 1.7; overflow-x: auto; color: var(--ink); background: #080808; }
+.code .c { color: var(--dim); }
+.code .p { color: var(--dim); user-select: none; }
 
-/* cuidado */
-.warn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: stretch; }
-@media (max-width: 860px) { .warn-grid { grid-template-columns: 1fr; } }
-.big { font-family: var(--f-display); font-weight: 900; font-size: clamp(54px, 8vw, 96px); line-height: .95; font-variant-numeric: tabular-nums; }
-.big.bad { color: var(--hard); } .big.good { color: var(--easy); }
+/* error */
+.err { border: 1px solid var(--signal); }
+.err .crt-n { color: var(--signal); text-shadow: 0 0 12px rgba(255,43,43,.45); }
+.err .flag { color: var(--signal); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; }
+.huge { font-size: clamp(70px, 9vw, 120px); }
 
-/* lista de hallazgos */
-.findings { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 16px 28px; }
-@media (max-width: 860px) { .findings { grid-template-columns: 1fr; } }
-.findings li { display: grid; grid-template-columns: 34px 1fr; gap: 10px; }
-.findings .k { font-family: var(--f-display); font-weight: 900; color: var(--accent); font-size: 24px; line-height: 1.1; }
-.findings b { display: block; font-family: var(--f-display); font-size: 17px; margin-bottom: 2px; }
-.findings span { color: var(--muted); font-size: 15px; }
+/* hallazgos */
+.log { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.log li { display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 12px; font-size: 14.5px; }
+.log .t { font-family: var(--f-crt); font-size: 19px; color: var(--dim); line-height: 1.1; }
+.log .t.bad { color: var(--signal); }
+.log b { color: var(--ink); }
+.log span { color: var(--dim); }
 
-/* navegación */
-.nav { position: fixed; z-index: 20; left: 0; right: 0; bottom: 0;
+/* navegación de terminal */
+.nav { position: fixed; z-index: 40; left: 0; right: 0; bottom: 0; background: var(--void); border-top: 1px solid var(--rule);
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
-  padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); padding-top: 10px;
-  display: flex; align-items: center; gap: 14px; background: linear-gradient(to top, var(--bg) 60%, transparent); }
-.progress { flex: 1; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
-.progress i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .5s cubic-bezier(.2,.7,.2,1); }
-.count { font-family: var(--f-mono); font-size: 13px; color: var(--muted); min-width: 52px; text-align: center; font-variant-numeric: tabular-nums; }
-.btn { appearance: none; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 8px; width: 42px; height: 38px; font-size: 18px; cursor: pointer; display: grid; place-items: center; transition: border-color .2s, transform .15s; }
-.btn:hover { border-color: var(--accent); }
-.btn:active { transform: translateY(1px); }
-.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.btn[disabled] { opacity: .35; cursor: default; }
-.hint { font-size: 12.5px; color: var(--muted); font-family: var(--f-mono); }
+  padding-top: 10px; padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  display: flex; align-items: center; gap: 14px; font-size: 13px; }
+.btn { appearance: none; background: transparent; color: var(--ink); border: 1px solid var(--ink); font-family: var(--f-mono); font-size: 13px; padding: 6px 12px; cursor: pointer; }
+.btn:hover:not([disabled]) { background: var(--ink); color: var(--void); }
+.btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.btn[disabled] { opacity: .3; cursor: default; }
+.blocks { flex: 1; font-family: var(--f-crt); font-size: 20px; letter-spacing: .12em; color: var(--dim); white-space: nowrap; overflow: hidden; min-width: 0; }
+.blocks .on { color: var(--ink); }
+.pos { font-family: var(--f-crt); font-size: 20px; font-variant-numeric: tabular-nums; }
+.hint { color: var(--dim); }
 @media (max-width: 640px) { .hint { display: none; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .slide, .progress i { transition: none; }
-  .slide.active .grow { animation: none; }
+  .slide, .slide.active { transition: none; animation: none; }
+  .slide.active .grow, .word::before, .word::after, h2 .cursor, .wires path { animation: none; }
 }
 </style>
 
-<main class="deck" id="deck" aria-live="polite">
+<div class="crt" aria-hidden="true"></div>
+<main class="deck" id="deck">
 
-  <!-- 1 · Portada -->
+  <!-- 00 · portada -->
   <section class="slide" id="inicio" aria-label="Portada">
-    <div class="wrap cover">
-      <div class="kanji-bg" aria-hidden="true">積</div>
-      <div class="eyebrow">C3 Taller 3 · Aprendizaje Supervisado</div>
-      <h1><span class="stack-word">Stacking</span>: el juez que aprende a quién creerle</h1>
-      <p class="lead">Aplicamos un ensamble apilado a <strong>Yomi Level</strong>, nuestro clasificador de dificultad del japonés en anime, doramas y cine: ¿es <span class="pill easy">Fácil</span>, <span class="pill mid">Intermedio</span> o <span class="pill hard">Difícil</span> para un estudiante?</p>
-      <div class="authors">
-        <span><b>José Santiago González</b></span><span><b>Oscar Mateo Arrubla</b></span><span><b>Leonardo Diasgranados</b></span>
+    <div class="sheet"><div class="main">
+      <div class="layer"><span class="id">Layer:00</span><span>yomi level · ensemble experiments</span><span>C3 · taller 3</span></div>
+      <div class="cover-grid">
+        <div style="display:grid;gap:18px;min-width:0">
+          <div class="kicker">present layer: stacked generalization</div>
+          <h1><span class="word" data-text="stacking">stacking</span></h1>
+          <p class="sub">el juez que aprende a quién creerle. Clasificamos el japonés de anime, doramas y cine para un estudiante:</p>
+          <div class="lvls"><span class="tag">Fácil</span><span class="tag dash">Intermedio</span><span class="tag inv">Difícil</span></div>
+          <div class="crew">
+            <b>José Santiago González · Oscar Mateo Arrubla · Leonardo Diasgranados</b>
+            <span>Ciencias de la Computación e IA · Universidad Sergio Arboleda</span>
+            <span>Aprendizaje Supervisado · Docente: Hernán Cruz Bueno</span>
+          </div>
+        </div>
+        <div class="halftone-box" aria-hidden="true">
+          <div class="halftone">積</div>
+          <div class="cap"><span>tsumu</span><span>= apilar</span><span>1 / 12</span></div>
+        </div>
       </div>
-      <div class="authors"><span>Ciencias de la Computación e IA · Universidad Sergio Arboleda</span><span>Docente: Hernán Cruz Bueno</span></div>
-      <div><span class="stamp" aria-hidden="true">積み重ね</span></div>
     </div>
+    <aside class="rail" aria-hidden="true"></aside></div>
   </section>
 
-  <!-- 2 · Dataset -->
+  <!-- 01 · dataset -->
   <section class="slide" id="dataset" aria-label="El dataset">
-    <div class="wrap">
-      <div class="eyebrow">01 · El problema y los datos</div>
-      <h2>Predecir el nivel del japonés de un título con solo su ficha</h2>
+    <div class="sheet"><div class="main">
+      <div class="layer"><span class="id">Layer:01</span><span><b>Data</b> · el problema</span></div>
+      <h2>Predecir el nivel del japonés de un título con solo su ficha<span class="cursor"></span></h2>
       <div class="stats">
-        <div class="stat"><div class="v">9.034</div><div class="l">títulos de Moe-DB + AniList + TMDB</div></div>
-        <div class="stat"><div class="v">28</div><div class="l">variables: vocabulario, palabras por episodio, año, formato y 21 géneros</div></div>
-        <div class="stat"><div class="v">3</div><div class="l">clases balanceadas por terciles (cortes en 19,9 y 25,4)</div></div>
-        <div class="stat"><div class="v">33%</div><div class="l">acierta el azar: es la línea base contra la que medimos</div></div>
+        <div><div class="crt-n">9034</div><div class="l">títulos · Moe-DB + AniList + TMDB</div></div>
+        <div><div class="crt-n">28</div><div class="l">variables: vocabulario, palabras por episodio, año, formato, 21 géneros</div></div>
+        <div><div class="crt-n">3</div><div class="l">clases balanceadas por terciles (cortes 19,9 y 25,4)</div></div>
+        <div><div class="crt-n">33%</div><div class="l">acierta el azar: la línea base</div></div>
       </div>
       <div class="grid">
-        <div class="c7"><p class="lead"><strong>Clasificación multiclase.</strong> La app decide por niveles (un semáforo), y así podemos comparar con los modelos y el Voting de los talleres anteriores. Misma división de siempre: 7.227 títulos para entrenar y 1.807 para probar.</p></div>
-        <div class="c5"><p class="lead"><strong>Sin fuga de datos:</strong> no usamos la dificultad de kanji ni la de vocabulario, porque la etiqueta se calcula con ellas.</p></div>
+        <div class="c7"><p class="lead"><b>Clasificación multiclase.</b> La app decide por niveles (un semáforo) y así comparamos con los modelos y el Voting de los talleres anteriores. 7.227 títulos para entrenar, 1.807 para probar.</p></div>
+        <div class="c5"><p class="lead"><b>Sin fuga de datos:</b> no usamos la dificultad de kanji ni la de vocabulario, porque la etiqueta se calcula con ellas.</p></div>
       </div>
-    </div>
+    </div><aside class="rail" aria-hidden="true"></aside></div>
   </section>
 
-  <!-- 3 · Voting vs Stacking -->
+  <!-- 02 · idea -->
   <section class="slide" id="idea" aria-label="Voting contra Stacking">
-    <div class="wrap">
-      <div class="eyebrow">02 · La idea</div>
-      <h2>Voting es una democracia. Stacking es una meritocracia.</h2>
+    <div class="sheet"><div class="main">
+      <div class="layer"><span class="id">Layer:02</span><span><b>Protocol</b> · democracia vs meritocracia</span></div>
+      <h2>En Voting todos pesan igual. En Stacking, el juez aprende quién sabe<span class="cursor"></span></h2>
       <div class="vs">
-        <div class="panel">
-          <h3>Voting Soft <span>taller anterior</span></h3>
-          <p class="lead" style="margin-top:8px">Promedia lo que dicen los 3 modelos. Todos pesan lo mismo, sepan o no.</p>
-          <div class="weights">
-            <div class="w"><span>KNN</span><div class="track"><div class="fill grow" style="width:33.3%;background:var(--base1)"></div></div><span class="val">1/3</span></div>
-            <div class="w"><span>SVM</span><div class="track"><div class="fill grow" style="width:33.3%;background:var(--base2)"></div></div><span class="val">1/3</span></div>
-            <div class="w"><span>Random Forest</span><div class="track"><div class="fill grow" style="width:33.3%;background:var(--base3)"></div></div><span class="val">1/3</span></div>
-          </div>
+        <div class="box">
+          <h3><span>Voting Soft</span><span>taller anterior</span></h3>
+          <p class="lead" style="margin-top:6px">Promedia lo que dicen los 3 modelos, sepan o no.</p>
+          <div class="w"><span>KNN</span><div class="track"><div class="bfill dots grow" style="width:33.3%"></div></div><span class="v">1/3</span></div>
+          <div class="w"><span>SVM</span><div class="track"><div class="bfill dots grow" style="width:33.3%"></div></div><span class="v">1/3</span></div>
+          <div class="w"><span>Random Forest</span><div class="track"><div class="bfill dots grow" style="width:33.3%"></div></div><span class="v">1/3</span></div>
         </div>
-        <div class="panel" style="border-color:var(--accent)">
-          <h3>Stacking <span>este taller</span></h3>
-          <p class="lead" style="margin-top:8px">Un meta-modelo estudia el historial de aciertos y <strong>aprende cuánto creerle a cada uno</strong>.</p>
-          <div class="weights">
-            <div class="w"><span>KNN</span><div class="track"><div class="fill grow" style="width:18%;background:var(--base1)"></div></div><span class="val">0,51</span></div>
-            <div class="w"><span>SVM</span><div class="track"><div class="fill grow" style="width:24%;background:var(--base2)"></div></div><span class="val">0,67</span></div>
-            <div class="w"><span>Random Forest</span><div class="track"><div class="fill grow" style="width:58%;background:var(--accent)"></div></div><span class="val">1,66</span></div>
-          </div>
-          <p class="axis-note" style="margin-top:12px">Pesos que el juez le da a cada experto cuando decide «Difícil».</p>
+        <div class="box hot">
+          <h3><span style="color:var(--ink)">Stacking</span><span>este taller</span></h3>
+          <p class="lead" style="margin-top:6px">Un meta-modelo estudia el historial de aciertos y <b>aprende cuánto creerle a cada uno</b>.</p>
+          <div class="w"><span>KNN</span><div class="track"><div class="bfill hatch grow" style="width:18%"></div></div><span class="v">0,51</span></div>
+          <div class="w"><span>SVM</span><div class="track"><div class="bfill hatch grow" style="width:24%"></div></div><span class="v">0,67</span></div>
+          <div class="w"><span>Random Forest</span><div class="track"><div class="bfill solid grow" style="width:58%"></div></div><span class="v">1,66</span></div>
+          <p class="note" style="margin-top:10px">peso que el juez le da a cada experto al decidir «Difícil»</p>
         </div>
       </div>
-    </div>
+    </div><aside class="rail" aria-hidden="true"></aside></div>
   </section>
 
-  <!-- 4 · Arquitectura -->
+  <!-- 03 · arquitectura -->
   <section class="slide" id="arquitectura" aria-label="Cómo funciona">
-    <div class="wrap">
-      <div class="kanji-bg" aria-hidden="true">積</div>
-      <div class="eyebrow">03 · Cómo se apila</div>
-      <h2>Dos niveles: los expertos opinan, el juez decide</h2>
-      <div class="levels">
-        <div class="lvl"><span class="tag">Entrada</span><div class="blocks"><div class="blk data">Un título: 28 variables (vocabulario, año, formato, géneros…)</div></div></div>
-        <div class="arrow-down">▼ cada experto predice por su cuenta</div>
-        <div class="lvl"><span class="tag">Nivel 0</span><div class="blocks">
-          <div class="blk knn">KNN<small>busca títulos parecidos</small></div>
-          <div class="blk svm">SVM<small>traza fronteras</small></div>
-          <div class="blk rf">Random Forest<small>300 árboles de reglas</small></div>
-        </div></div>
-        <div class="arrow-down">▼ 9 probabilidades (3 por experto), calculadas out-of-fold con cv=5</div>
-        <div class="lvl"><span class="tag">Nivel 1</span><div class="blocks"><div class="blk meta">Meta-modelo: Regresión Logística<small>no ve el título; solo ve qué dijo cada experto y qué tan seguro estaba</small></div></div></div>
-        <div class="arrow-down">▼</div>
-        <div class="lvl"><span class="tag">Salida</span><div class="blocks"><div class="blk out"><span class="pill easy">Fácil</span><span class="pill mid">Intermedio</span><span class="pill hard">Difícil</span></div></div></div>
+    <div class="sheet"><div class="main">
+      <div class="layer"><span class="id">Layer:03</span><span><b>Wired</b> · cómo se apila</span></div>
+      <h2>Dos niveles: los expertos opinan, el juez decide<span class="cursor"></span></h2>
+      <div class="wire-wrap" id="wirewrap">
+        <svg class="wires" id="wires" aria-hidden="true"></svg>
+        <div class="stack">
+          <div class="row"><span class="lab">input</span><div class="nodes"><div class="node dash" data-w="in">Un título: 28 variables<small>vocabulario, año, formato, géneros…</small></div></div></div>
+          <div class="row"><span class="lab">nivel 0</span><div class="nodes">
+            <div class="node" data-w="b">KNN<small>busca títulos parecidos</small></div>
+            <div class="node" data-w="b">SVM<small>traza fronteras</small></div>
+            <div class="node" data-w="b">Random Forest<small>300 árboles de reglas</small></div>
+          </div></div>
+          <div class="row"><span class="lab">nivel 1</span><div class="nodes"><div class="node judge" data-w="m">Meta-modelo: Regresión Logística<small>recibe 9 probabilidades out-of-fold (cv=5); no ve el título</small></div></div></div>
+          <div class="row"><span class="lab">output</span><div class="nodes"><div class="node" data-w="o">Fácil · Intermedio · Difícil</div></div></div>
+        </div>
       </div>
-    </div>
+    </div><aside class="rail" aria-hidden="true"></aside></div>
   </section>
 
-  <!-- 5 · Modelos base -->
+  <!-- 04 · modelos base -->
   <section class="slide" id="modelos-base" aria-label="Modelos base">
-    <div class="wrap">
-      <div class="eyebrow">04 · Los expertos (nivel 0)</div>
-      <h2>Tres familias distintas, con los parámetros de cada taller</h2>
-      <div class="tbl-wrap panel" style="padding:8px 16px">
+    <div class="sheet"><div class="main">
+      <div class="layer"><span class="id">Layer:04</span><span><b>Nodes</b> · los expertos (nivel 0)</span></div>
+      <h2>Tres familias distintas, con los parámetros de cada taller<span class="cursor"></span></h2>
+      <div class="tbl-wrap">
         <table>
-          <thead><tr><th>Modelo</th><th>Familia</th><th>Parámetros (taller)</th><th class="n">Accuracy</th><th class="n">F1-macro</th></tr></thead>
+          <thead><tr><th>Modelo</th><th>Familia</th><th>Parámetros</th><th class="n">Accuracy</th><th class="n">F1-macro</th></tr></thead>
           <tbody>
-            <tr><td><span class="sw" style="background:var(--base1)"></span>KNN</td><td>Distancias</td><td class="mono">K=39, Manhattan, pesos por distancia</td><td class="n">0,546</td><td class="n">0,544</td></tr>
-            <tr><td><span class="sw" style="background:var(--base2)"></span>SVM</td><td>Márgenes</td><td class="mono">RBF, C=100, gamma='scale'</td><td class="n">0,570</td><td class="n">0,568</td></tr>
-            <tr><td><span class="sw" style="background:var(--base3)"></span>Random Forest</td><td>Árboles</td><td class="mono">300 árboles, profundidad 15</td><td class="n">0,581</td><td class="n">0,580</td></tr>
+            <tr><td>KNN</td><td>distancias</td><td>K=39 · Manhattan · pesos por distancia</td><td class="n">0,546</td><td class="n">0,544</td></tr>
+            <tr><td>SVM</td><td>márgenes</td><td>RBF · C=100 · gamma='scale'</td><td class="n">0,570</td><td class="n">0,568</td></tr>
+            <tr><td>Random Forest</td><td>árboles</td><td>300 árboles · profundidad 15</td><td class="n">0,581</td><td class="n">0,580</td></tr>
           </tbody>
         </table>
       </div>
-      <p class="lead">La regla de oro de la clase: <strong>no usar tres árboles iguales</strong>. Cada familia se equivoca en títulos distintos, y eso es lo que el juez puede aprovechar.</p>
-    </div>
+      <p class="lead">La regla de oro de la clase: <b>no usar tres árboles iguales</b>. Cada familia se equivoca en títulos distintos, y eso es lo que el juez aprovecha.</p>
+    </div><aside class="rail" aria-hidden="true"></aside></div>
   </section>
 
-  <!-- 6 · Código -->
+  <!-- 05 · código -->
   <section class="slide" id="codigo" aria-label="Configuración">
-    <div class="wrap">
-      <div class="eyebrow">05 · Configuración</div>
-      <h2>Un juez simple, con validación cruzada y probabilidades</h2>
+    <div class="sheet"><div class="main">
+      <div class="layer"><span class="id">Layer:05</span><span><b>Code</b> · configuración</span></div>
+      <h2>Un juez simple, con validación cruzada y probabilidades<span class="cursor"></span></h2>
       <div class="grid">
         <div class="c7">
-<pre class="code"><span class="k">stacking</span> = StackingClassifier(
-    estimators=[(<span class="s">'KNN'</span>, knn), (<span class="s">'SVM'</span>, svm), (<span class="s">'RF'</span>, rf)],
-    final_estimator=LogisticRegression(),  <span class="c"># el juez</span>
-    cv=StratifiedKFold(<span class="k">5</span>),               <span class="c"># out-of-fold</span>
-    stack_method=<span class="s">'predict_proba'</span>)        <span class="c"># probabilidades</span>
-stacking.fit(X_train, y_train)</pre>
+<pre class="code"><span class="p">&gt;&gt;&gt; </span>stacking = StackingClassifier(
+        estimators=[('KNN', knn), ('SVM', svm), ('RF', rf)],
+        final_estimator=LogisticRegression(),  <span class="c"># el juez</span>
+        cv=StratifiedKFold(5),               <span class="c"># out-of-fold</span>
+        stack_method='predict_proba')        <span class="c"># probabilidades</span>
+<span class="p">&gt;&gt;&gt; </span>stacking.fit(X_train, y_train)
+<span class="c">StackingClassifier(...)  # 9 entradas -&gt; 3 clases</span></pre>
         </div>
-        <div class="c5" style="display:flex;flex-direction:column;gap:14px">
-          <p><strong>Regresión Logística como juez.</strong> Los expertos ya hicieron el trabajo pesado; un juez complejo memorizaría quién acierta en cada fila.</p>
-          <p><strong>cv=5.</strong> El juez aprende con predicciones sobre títulos que cada experto <em>no vio</em> al entrenar.</p>
-          <p><strong>Probabilidades.</strong> El juez sabe no solo qué dijo cada experto, sino qué tan seguro estaba.</p>
+        <div class="c5" style="display:grid;gap:12px">
+          <p><b>Regresión Logística como juez.</b> Los expertos ya hicieron el trabajo pesado; un juez complejo memorizaría quién acierta en cada fila.</p>
+          <p><b>cv=5.</b> El juez aprende con predicciones sobre títulos que cada experto <i>no vio</i> al entrenar.</p>
+          <p><b>Probabilidades.</b> El juez sabe qué dijo cada experto y qué tan seguro estaba.</p>
         </div>
       </div>
-    </div>
+    </div><aside class="rail" aria-hidden="true"></aside></div>
   </section>
 
-  <!-- 7 · Resultados -->
+  <!-- 06 · resultados -->
   <section class="slide" id="resultados" aria-label="Resultados">
-    <div class="wrap">
-      <div class="eyebrow">06 · Resultados en 1.807 títulos de prueba</div>
-      <h2>El Stacking gana en las cinco métricas</h2>
+    <div class="sheet"><div class="main">
+      <div class="layer"><span class="id">Layer:06</span><span><b>Output</b> · 1.807 títulos de prueba</span></div>
+      <h2>El Stacking gana en las cinco métricas<span class="cursor"></span></h2>
       <div class="grid">
-        <div class="c6 panel">
-          <h3 style="margin-bottom:14px">F1-macro</h3>
+        <div class="c6 box">
+          <h3 style="margin-bottom:12px">F1-macro</h3>
           <div class="bars">
-            <div class="bar"><span class="name">KNN</span><div class="track"><div class="fill grow" style="width:54.4%;background:var(--base1)"></div></div><span class="val">0,544</span></div>
-            <div class="bar"><span class="name">SVM</span><div class="track"><div class="fill grow" style="width:56.8%;background:var(--base2)"></div></div><span class="val">0,568</span></div>
-            <div class="bar"><span class="name">Random Forest</span><div class="track"><div class="fill grow" style="width:58.0%;background:var(--base3)"></div></div><span class="val">0,580</span></div>
-            <div class="bar"><span class="name">Voting Soft</span><div class="track"><div class="fill grow" style="width:59.1%;background:var(--vote)"></div></div><span class="val">0,591</span></div>
-            <div class="bar win"><span class="name">Stacking</span><div class="track"><div class="fill grow" style="width:60.0%;background:var(--accent)"></div></div><span class="val">0,600</span></div>
+            <div class="bar"><span>KNN</span><div class="track"><div class="bfill dots grow" style="width:54.4%"></div></div><span class="v">0,544</span></div>
+            <div class="bar"><span>SVM</span><div class="track"><div class="bfill dots grow" style="width:56.8%"></div></div><span class="v">0,568</span></div>
+            <div class="bar"><span>Random Forest</span><div class="track"><div class="bfill dots grow" style="width:58.0%"></div></div><span class="v">0,580</span></div>
+            <div class="bar"><span>Voting Soft</span><div class="track"><div class="bfill hatch grow" style="width:59.1%"></div></div><span class="v">0,591</span></div>
+            <div class="bar win"><span>Stacking</span><div class="track"><div class="bfill solid grow" style="width:60.0%"></div></div><span class="v">0,600</span></div>
           </div>
-          <p class="axis-note" style="margin-top:12px">Escala de 0 a 1 · el azar estaría en 0,33</p>
+          <p class="note" style="margin-top:10px">escala 0-1 · el azar estaría en 0,33</p>
         </div>
         <div class="c6 tbl-wrap">
           <table>
-            <thead><tr><th>Modelo</th><th class="n">Acc.</th><th class="n">AUC</th><th class="n">Recall Difícil</th><th class="n">Errores graves</th></tr></thead>
+            <thead><tr><th>Modelo</th><th class="n">Acc.</th><th class="n">AUC</th><th class="n">Recall dif.</th><th class="n">Err. graves</th></tr></thead>
             <tbody>
               <tr><td>KNN</td><td class="n">0,546</td><td class="n">0,737</td><td class="n">0,602</td><td class="n">7,9%</td></tr>
               <tr><td>SVM</td><td class="n">0,570</td><td class="n">0,746</td><td class="n">0,662</td><td class="n">6,5%</td></tr>
@@ -359,117 +372,116 @@ stacking.fit(X_train, y_train)</pre>
               <tr class="win"><td>Stacking</td><td class="n">0,600</td><td class="n">0,779</td><td class="n">0,672</td><td class="n">5,0%</td></tr>
             </tbody>
           </table>
-          <p class="axis-note" style="margin-top:10px">Errores graves: confundir Fácil con Difícil o al revés.</p>
+          <p class="note" style="margin-top:8px">errores graves = confundir Fácil con Difícil o al revés</p>
         </div>
       </div>
-    </div>
+    </div><aside class="rail" aria-hidden="true"></aside></div>
   </section>
 
-  <!-- 8 · Pesos del juez -->
+  <!-- 07 · juez -->
   <section class="slide" id="juez" aria-label="A quién le cree el juez">
-    <div class="wrap">
-      <div class="eyebrow">07 · Lo que aprendió el meta-modelo</div>
-      <h2>¿A quién le cree el juez?</h2>
+    <div class="sheet"><div class="main">
+      <div class="layer"><span class="id">Layer:07</span><span><b>Trust</b> · lo que aprendió el meta-modelo</span></div>
+      <h2>¿A quién le cree el juez?<span class="cursor"></span></h2>
       <div class="grid">
         <div class="c7">
           <div class="heat" role="table" aria-label="Peso que el juez le da a cada experto en cada nivel">
             <div class="h"></div><div class="h">KNN</div><div class="h">SVM</div><div class="h">Random Forest</div>
-            <div class="rowh"><span class="pill easy">Fácil</span></div>
-            <div class="cell" style="background:color-mix(in srgb,var(--pos) 18%,transparent)">0,31</div>
-            <div class="cell" style="background:color-mix(in srgb,var(--pos) 44%,transparent)">0,77</div>
-            <div class="cell" style="background:color-mix(in srgb,var(--pos) 95%,transparent);color:#fff">1,73</div>
-            <div class="rowh"><span class="pill mid">Intermedio</span></div>
-            <div class="cell" style="background:color-mix(in srgb,var(--pos) 5%,transparent)">0,08</div>
-            <div class="cell" style="background:color-mix(in srgb,var(--pos) 27%,transparent)">0,47</div>
-            <div class="cell" style="background:color-mix(in srgb,var(--pos) 46%,transparent)">0,80</div>
-            <div class="rowh"><span class="pill hard">Difícil</span></div>
-            <div class="cell" style="background:color-mix(in srgb,var(--pos) 29%,transparent)">0,51</div>
-            <div class="cell" style="background:color-mix(in srgb,var(--pos) 38%,transparent)">0,67</div>
-            <div class="cell" style="background:color-mix(in srgb,var(--pos) 92%,transparent);color:#fff">1,66</div>
+            <div class="r">Fácil</div>
+            <div class="cell" style="background:rgba(237,237,230,.10)">0,31</div>
+            <div class="cell" style="background:rgba(237,237,230,.26)">0,77</div>
+            <div class="cell top">1,73</div>
+            <div class="r">Intermedio</div>
+            <div class="cell" style="background:rgba(237,237,230,.02)">0,08</div>
+            <div class="cell" style="background:rgba(237,237,230,.16)">0,47</div>
+            <div class="cell" style="background:rgba(237,237,230,.28)">0,80</div>
+            <div class="r">Difícil</div>
+            <div class="cell" style="background:rgba(237,237,230,.17)">0,51</div>
+            <div class="cell" style="background:rgba(237,237,230,.23)">0,67</div>
+            <div class="cell top">1,66</div>
           </div>
-          <p class="axis-note" style="margin-top:10px">Peso que la Regresión Logística le da a la probabilidad que cada experto asigna a ese mismo nivel.</p>
+          <p class="note" style="margin-top:8px">peso de la probabilidad que cada experto le da a ese mismo nivel</p>
         </div>
-        <div class="c5" style="display:flex;flex-direction:column;gap:14px">
-          <p><strong>Random Forest manda:</strong> su opinión pesa más del doble que la del SVM en Fácil y Difícil.</p>
-          <p><strong>El SVM es el segundo experto</strong> en los tres niveles.</p>
-          <p><strong>KNN casi no cuenta para Intermedio (0,08):</strong> el juez aprendió que ahí no sabe distinguir.</p>
-          <p><strong>También descarta:</strong> si Random Forest dice «Fácil» con fuerza, eso le resta 1,31 a «Difícil».</p>
+        <div class="c5" style="display:grid;gap:12px">
+          <p><b>Random Forest manda:</b> su opinión pesa más del doble que la del SVM en Fácil y Difícil.</p>
+          <p><b>El SVM es el segundo experto</b> en los tres niveles.</p>
+          <p><b>KNN casi no cuenta para Intermedio (0,08):</b> el juez aprendió que ahí no sabe distinguir.</p>
+          <p><b>También descarta:</b> si Random Forest dice «Fácil» con fuerza, eso le resta 1,31 a «Difícil».</p>
         </div>
       </div>
-    </div>
+    </div><aside class="rail" aria-hidden="true"></aside></div>
   </section>
 
-  <!-- 9 · Errores graves -->
+  <!-- 08 · errores -->
   <section class="slide" id="errores" aria-label="Errores graves">
-    <div class="wrap">
-      <div class="eyebrow">08 · Lo que importa para el estudiante</div>
-      <h2>Menos títulos difíciles disfrazados de fáciles</h2>
+    <div class="sheet"><div class="main">
+      <div class="layer"><span class="id">Layer:08</span><span><b>User</b> · lo que importa para el estudiante</span></div>
+      <h2>Menos títulos difíciles disfrazados de fáciles<span class="cursor"></span></h2>
       <div class="grid">
-        <div class="c6 panel">
-          <h3 style="margin-bottom:14px">Difícil predicho como Fácil</h3>
+        <div class="c6 box">
+          <h3 style="margin-bottom:12px">Difícil → predicho Fácil</h3>
           <div class="bars">
-            <div class="bar"><span class="name">KNN</span><div class="track"><div class="fill grow" style="width:100%;background:var(--base1)"></div></div><span class="val">84</span></div>
-            <div class="bar"><span class="name">Random Forest</span><div class="track"><div class="fill grow" style="width:73.8%;background:var(--base3)"></div></div><span class="val">62</span></div>
-            <div class="bar"><span class="name">Voting Soft</span><div class="track"><div class="fill grow" style="width:66.7%;background:var(--vote)"></div></div><span class="val">56</span></div>
-            <div class="bar"><span class="name">SVM</span><div class="track"><div class="fill grow" style="width:65.5%;background:var(--base2)"></div></div><span class="val">55</span></div>
-            <div class="bar win"><span class="name">Stacking</span><div class="track"><div class="fill grow" style="width:57.1%;background:var(--accent)"></div></div><span class="val">48</span></div>
+            <div class="bar"><span>KNN</span><div class="track"><div class="bfill dots grow" style="width:100%"></div></div><span class="v">84</span></div>
+            <div class="bar"><span>Random Forest</span><div class="track"><div class="bfill dots grow" style="width:73.8%"></div></div><span class="v">62</span></div>
+            <div class="bar"><span>Voting Soft</span><div class="track"><div class="bfill hatch grow" style="width:66.7%"></div></div><span class="v">56</span></div>
+            <div class="bar"><span>SVM</span><div class="track"><div class="bfill dots grow" style="width:65.5%"></div></div><span class="v">55</span></div>
+            <div class="bar win"><span>Stacking</span><div class="track"><div class="bfill solid grow" style="width:57.1%"></div></div><span class="v">48</span></div>
           </div>
         </div>
-        <div class="c6 panel">
-          <h3 style="margin-bottom:14px">Fácil predicho como Difícil</h3>
+        <div class="c6 box">
+          <h3 style="margin-bottom:12px">Fácil → predicho Difícil</h3>
           <div class="bars">
-            <div class="bar"><span class="name">SVM</span><div class="track"><div class="fill grow" style="width:73.8%;background:var(--base2)"></div></div><span class="val">62</span></div>
-            <div class="bar"><span class="name">KNN</span><div class="track"><div class="fill grow" style="width:69%;background:var(--base1)"></div></div><span class="val">58</span></div>
-            <div class="bar"><span class="name">Random Forest</span><div class="track"><div class="fill grow" style="width:57.1%;background:var(--base3)"></div></div><span class="val">48</span></div>
-            <div class="bar"><span class="name">Voting Soft</span><div class="track"><div class="fill grow" style="width:54.8%;background:var(--vote)"></div></div><span class="val">46</span></div>
-            <div class="bar win"><span class="name">Stacking</span><div class="track"><div class="fill grow" style="width:50%;background:var(--accent)"></div></div><span class="val">42</span></div>
+            <div class="bar"><span>SVM</span><div class="track"><div class="bfill dots grow" style="width:73.8%"></div></div><span class="v">62</span></div>
+            <div class="bar"><span>KNN</span><div class="track"><div class="bfill dots grow" style="width:69%"></div></div><span class="v">58</span></div>
+            <div class="bar"><span>Random Forest</span><div class="track"><div class="bfill dots grow" style="width:57.1%"></div></div><span class="v">48</span></div>
+            <div class="bar"><span>Voting Soft</span><div class="track"><div class="bfill hatch grow" style="width:54.8%"></div></div><span class="v">46</span></div>
+            <div class="bar win"><span>Stacking</span><div class="track"><div class="bfill solid grow" style="width:50%"></div></div><span class="v">42</span></div>
           </div>
         </div>
       </div>
-      <p class="lead">Un título difícil recomendado a un principiante es el error que provoca abandono. El Stacking deja pasar <strong>48</strong> de ellos frente a <strong>62</strong> de Random Forest solo.</p>
-    </div>
+      <p class="lead">Un título difícil recomendado a un principiante es el error que provoca abandono. El Stacking deja pasar <b>48</b> frente a <b>62</b> de Random Forest solo.</p>
+    </div><aside class="rail" aria-hidden="true"></aside></div>
   </section>
 
-  <!-- 10 · Pero cuidado -->
+  <!-- 09 · cuidado -->
   <section class="slide" id="cuidado" aria-label="Por qué la validación cruzada es obligatoria">
-    <div class="wrap">
-      <div class="eyebrow">09 · Pero cuidado</div>
-      <h2>Sin validación cruzada, el juez le cree al que memoriza</h2>
-      <div class="warn-grid">
-        <div class="panel">
-          <div class="axis-note">Stacking sin out-of-fold</div>
-          <div class="big bad">0,569</div>
-          <p style="margin-top:10px">KNN acierta el <strong>100%</strong> en sus datos de entrenamiento (cada título es su propio vecino), así que el juez le da un peso de <strong>3,85</strong>: más del doble que a Random Forest. En títulos nuevos queda <strong>peor que Random Forest solo</strong> (0,580).</p>
+    <div class="sheet"><div class="main">
+      <div class="layer"><span class="id">Layer:09</span><span><b style="color:var(--signal)">Error</b> · pero cuidado</span></div>
+      <h2>Sin validación cruzada, el juez le cree al que memoriza<span class="cursor"></span></h2>
+      <div class="grid">
+        <div class="c6 box err">
+          <div class="flag">sin out-of-fold · F1-macro</div>
+          <div class="crt-n huge">0,569</div>
+          <p style="margin-top:8px">KNN acierta el <b>100%</b> en sus datos de entrenamiento (cada título es su propio vecino), así que el juez le da un peso de <b>3,85</b>, más del doble que a Random Forest. En títulos nuevos queda <b>peor que Random Forest solo</b> (0,580).</p>
         </div>
-        <div class="panel" style="border-color:var(--accent)">
-          <div class="axis-note">Stacking con cv=5</div>
-          <div class="big good">0,600</div>
-          <p style="margin-top:10px">Con predicciones out-of-fold, el juez ve cómo le va a cada experto con títulos que no conoce, y por eso confía en Random Forest y el SVM. Es la advertencia de la clase: sin esto, el meta-modelo elige siempre al que más se sobreajustó.</p>
+        <div class="c6 box hot">
+          <div class="note" style="letter-spacing:.14em;text-transform:uppercase">con cv=5 · F1-macro</div>
+          <div class="crt-n huge">0,600</div>
+          <p style="margin-top:8px">Con predicciones out-of-fold, el juez ve cómo le va a cada experto con títulos que no conoce, y confía en Random Forest y el SVM. Es la advertencia de la clase: sin esto, el meta-modelo elige al que más se sobreajustó.</p>
         </div>
       </div>
-      <p class="axis-note">Valores de F1-macro en los 1.807 títulos de prueba.</p>
-    </div>
+    </div><aside class="rail" aria-hidden="true"></aside></div>
   </section>
 
-  <!-- 11 · Ablación y juez -->
+  <!-- 10 · ablación -->
   <section class="slide" id="ablacion" aria-label="Quitar expertos y cambiar el juez">
-    <div class="wrap">
-      <div class="eyebrow">10 · Pruebas adicionales</div>
-      <h2>Los tres expertos aportan; el juez simple basta</h2>
+    <div class="sheet"><div class="main">
+      <div class="layer"><span class="id">Layer:10</span><span><b>Test</b> · pruebas adicionales</span></div>
+      <h2>Los tres expertos aportan; el juez simple basta<span class="cursor"></span></h2>
       <div class="grid">
-        <div class="c6 panel">
-          <h3 style="margin-bottom:14px">Quitar un experto (F1-macro)</h3>
+        <div class="c6 box">
+          <h3 style="margin-bottom:12px">Quitar un experto · F1-macro</h3>
           <div class="bars">
-            <div class="bar win"><span class="name">Los 3</span><div class="track"><div class="fill grow" style="width:100%;background:var(--accent)"></div></div><span class="val">0,600</span></div>
-            <div class="bar"><span class="name">Sin KNN</span><div class="track"><div class="fill grow" style="width:83.1%;background:var(--base2)"></div></div><span class="val">0,595</span></div>
-            <div class="bar"><span class="name">Sin SVM</span><div class="track"><div class="fill grow" style="width:65.5%;background:var(--base2)"></div></div><span class="val">0,589</span></div>
-            <div class="bar"><span class="name">Sin RF</span><div class="track"><div class="fill grow" style="width:41.2%;background:var(--base2)"></div></div><span class="val">0,582</span></div>
+            <div class="bar win"><span>Los 3</span><div class="track"><div class="bfill solid grow" style="width:100%"></div></div><span class="v">0,600</span></div>
+            <div class="bar"><span>Sin KNN</span><div class="track"><div class="bfill dots grow" style="width:83.1%"></div></div><span class="v">0,595</span></div>
+            <div class="bar"><span>Sin SVM</span><div class="track"><div class="bfill dots grow" style="width:65.5%"></div></div><span class="v">0,589</span></div>
+            <div class="bar"><span>Sin RF</span><div class="track"><div class="bfill dots grow" style="width:41.2%"></div></div><span class="v">0,582</span></div>
           </div>
-          <p class="axis-note" style="margin-top:12px">Eje desde 0,570 para ver las diferencias.</p>
+          <p class="note" style="margin-top:10px">eje desde 0,570 para ver las diferencias</p>
         </div>
         <div class="c6 tbl-wrap">
           <table>
-            <thead><tr><th>Meta-modelo (juez)</th><th class="n">F1-macro</th><th class="n">Errores graves</th></tr></thead>
+            <thead><tr><th>Meta-modelo (juez)</th><th class="n">F1</th><th class="n">Err. graves</th></tr></thead>
             <tbody>
               <tr class="win"><td>Regresión Logística (elegido)</td><td class="n">0,600</td><td class="n">5,0%</td></tr>
               <tr><td>Regresión Logística C=0,1</td><td class="n">0,597</td><td class="n">5,0%</td></tr>
@@ -477,81 +489,99 @@ stacking.fit(X_train, y_train)</pre>
               <tr><td>Logística + passthrough</td><td class="n">0,597</td><td class="n">5,0%</td></tr>
             </tbody>
           </table>
-          <p style="margin-top:12px">Los cuatro jueces empatan. Elegimos la <strong>Regresión Logística</strong> por parsimonia: es la más simple y sus pesos se pueden explicar.</p>
+          <p style="margin-top:12px">Los cuatro jueces empatan. Elegimos la <b>Regresión Logística</b> por parsimonia: es la más simple y sus pesos se pueden explicar.</p>
         </div>
       </div>
-    </div>
+    </div><aside class="rail" aria-hidden="true"></aside></div>
   </section>
 
-  <!-- 12 · Conclusión -->
+  <!-- 11 · conclusión -->
   <section class="slide" id="conclusion" aria-label="Hallazgos y conclusión">
-    <div class="wrap">
-      <div class="kanji-bg" aria-hidden="true">積</div>
-      <div class="eyebrow">11 · Hallazgos</div>
-      <h2>El Stacking es nuestro mejor modelo hasta ahora</h2>
-      <ul class="findings">
-        <li><span class="k">↑</span><div><b>Mejor en todo</b><span>F1 0,600 frente a 0,591 del Voting Soft y 0,580 de Random Forest; errores graves de 6,1% a 5,0%.</span></div></li>
-        <li><span class="k">⚖</span><div><b>Meritocracia aprendida</b><span>El juez confía en Random Forest, luego en el SVM, y casi ignora a KNN para Intermedio.</span></div></li>
-        <li><span class="k">≠</span><div><b>La diversidad suma</b><span>Quitar cualquier experto baja el resultado; sin Random Forest cae a 0,582.</span></div></li>
-        <li><span class="k">!</span><div><b>La validación cruzada es obligatoria</b><span>Sin ella el stacking queda peor que un solo modelo (0,569).</span></div></li>
+    <div class="sheet"><div class="main">
+      <div class="layer"><span class="id">Layer:11</span><span><b>Close</b> · hallazgos</span></div>
+      <h2>El Stacking es nuestro mejor modelo hasta ahora<span class="cursor"></span></h2>
+      <ul class="log">
+        <li><span class="t">[ok]</span><div><b>Mejor en todo.</b> <span>F1 0,600 frente a 0,591 del Voting Soft y 0,580 de Random Forest; errores graves de 6,1% a 5,0%.</span></div></li>
+        <li><span class="t">[ok]</span><div><b>Meritocracia aprendida.</b> <span>El juez confía en Random Forest, luego en el SVM, y casi ignora a KNN para Intermedio.</span></div></li>
+        <li><span class="t">[ok]</span><div><b>La diversidad suma.</b> <span>Quitar cualquier experto baja el resultado; sin Random Forest cae a 0,582.</span></div></li>
+        <li><span class="t bad">[!!]</span><div><b>La validación cruzada es obligatoria.</b> <span>Sin ella el stacking queda peor que un solo modelo (0,569).</span></div></li>
       </ul>
-      <div class="panel" style="border-color:var(--accent)">
-        <p><strong>Conclusión.</strong> Elegimos el Stacking (KNN + SVM + Random Forest con Regresión Logística) como el modelo más preciso de Yomi Level. La mejora es moderada (+2 puntos de F1) porque el nivel Intermedio sigue siendo difícil de separar con estas 28 variables (F1 0,472), y entrenarlo cuesta más: conviene en un servidor, mientras la app del navegador sigue con Random Forest solo.</p>
+      <div class="box hot">
+        <p><b>Conclusión.</b> Elegimos el Stacking (KNN + SVM + Random Forest con Regresión Logística) como el modelo más preciso de Yomi Level. La mejora es moderada (+2 puntos de F1) porque el nivel Intermedio sigue siendo difícil de separar con estas 28 variables (F1 0,472), y entrenarlo cuesta más: conviene en un servidor, mientras la app del navegador sigue con Random Forest solo.</p>
       </div>
-    </div>
+      <p class="note">close the layer, open the next one</p>
+    </div><aside class="rail" aria-hidden="true"></aside></div>
   </section>
 
 </main>
 
 <nav class="nav" aria-label="Navegación de diapositivas">
-  <button class="btn" id="prev" type="button" aria-label="Diapositiva anterior">←</button>
-  <button class="btn" id="next" type="button" aria-label="Diapositiva siguiente">→</button>
-  <span class="count" id="count">1 / 12</span>
-  <div class="progress" aria-hidden="true"><i id="bar"></i></div>
-  <span class="hint">← → para avanzar</span>
+  <button class="btn" id="prev" type="button" aria-label="Diapositiva anterior">&lt; prev</button>
+  <span class="pos" id="pos">01/12</span>
+  <span class="blocks" id="blocks" aria-hidden="true"></span>
+  <span class="hint">← → navegar</span>
+  <button class="btn" id="next" type="button" aria-label="Diapositiva siguiente">next &gt;</button>
 </nav>
 
 <script>
 (function () {
   const slides = Array.from(document.querySelectorAll('.slide'));
-  const count = document.getElementById('count');
-  const bar = document.getElementById('bar');
-  const prev = document.getElementById('prev');
-  const next = document.getElementById('next');
+  const names = ['Data', 'Protocol', 'Wired', 'Nodes', 'Code', 'Output', 'Trust', 'User', 'Error', 'Test', 'Close'];
+  const pad = n => String(n).padStart(2, '0');
+  const pos = document.getElementById('pos'), blocks = document.getElementById('blocks');
+  const prev = document.getElementById('prev'), next = document.getElementById('next');
   let i = 0;
 
-  function indexFromHash() {
-    const id = location.hash.slice(1);
-    const k = slides.findIndex(s => s.id === id);
-    return k >= 0 ? k : 0;
+  // columna lateral de capas, como el texto fantasma del póster
+  document.querySelectorAll('.rail').forEach((rail, k) => {
+    const lines = [];
+    for (let r = 0; r < 3; r++) names.forEach((n, j) => {
+      const on = r === 0 && j + 1 === k;
+      lines.push(`<div${on ? ' class="on"' : ''}>Layer:${pad(j + 1)} ${n}</div>`);
+    });
+    rail.innerHTML = lines.join('');
+  });
+
+  // cables del diagrama: se dibujan entre los nodos de cada nivel
+  function wire() {
+    const wrap = document.getElementById('wirewrap'), svg = document.getElementById('wires');
+    if (!wrap || !slides[i].contains(wrap)) return;
+    const box = wrap.getBoundingClientRect();
+    const c = el => { const r = el.getBoundingClientRect(); return { x: r.left - box.left + r.width / 2, t: r.top - box.top, b: r.bottom - box.top }; };
+    const inp = c(wrap.querySelector('[data-w="in"]')), meta = c(wrap.querySelector('[data-w="m"]')), out = c(wrap.querySelector('[data-w="o"]'));
+    const bs = Array.from(wrap.querySelectorAll('[data-w="b"]')).map(c);
+    const d = [];
+    bs.forEach(b => { d.push(`M${inp.x},${inp.b} C${inp.x},${(inp.b + b.t) / 2} ${b.x},${(inp.b + b.t) / 2} ${b.x},${b.t}`);
+                      d.push(`M${b.x},${b.b} C${b.x},${(b.b + meta.t) / 2} ${meta.x},${(b.b + meta.t) / 2} ${meta.x},${meta.t}`); });
+    d.push(`M${meta.x},${meta.b} L${out.x},${out.t}`);
+    svg.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
+    svg.innerHTML = d.map(p => `<path d="${p}"/>`).join('');
   }
 
+  function indexFromHash() { const k = slides.findIndex(s => s.id === location.hash.slice(1)); return k >= 0 ? k : 0; }
   function show(k, push) {
     i = Math.max(0, Math.min(slides.length - 1, k));
     slides.forEach((s, j) => {
       s.classList.toggle('active', j === i);
-      s.classList.toggle('before', j < i);
+      s.classList.toggle('tuning', j === i && !!push);   // la "sintonía" solo al navegar, nunca en la carga inicial
       s.setAttribute('aria-hidden', j === i ? 'false' : 'true');
     });
     slides[i].scrollTop = 0;
-    count.textContent = (i + 1) + ' / ' + slides.length;
-    bar.style.width = ((i + 1) / slides.length * 100) + '%';
-    prev.disabled = i === 0;
-    next.disabled = i === slides.length - 1;
+    pos.textContent = pad(i + 1) + '/' + slides.length;
+    blocks.innerHTML = slides.map((_, j) => j <= i ? '<span class="on">■</span>' : '□').join('');
+    prev.disabled = i === 0; next.disabled = i === slides.length - 1;
     if (push && location.hash.slice(1) !== slides[i].id) history.replaceState(null, '', '#' + slides[i].id);
+    requestAnimationFrame(wire); setTimeout(wire, 400);
   }
 
   prev.addEventListener('click', () => show(i - 1, true));
   next.addEventListener('click', () => show(i + 1, true));
   document.addEventListener('keydown', e => {
-    if (e.target.closest('input, textarea, select')) return;
     if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); show(i + 1, true); }
     else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); show(i - 1, true); }
     else if (e.key === 'Home') show(0, true);
     else if (e.key === 'End') show(slides.length - 1, true);
   });
-
-  // Deslizar en pantallas táctiles (solo horizontal, para no chocar con el scroll vertical)
   let x0 = null, y0 = null;
   document.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
   document.addEventListener('touchend', e => {
@@ -560,8 +590,9 @@ stacking.fit(X_train, y_train)</pre>
     if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) show(i + (dx < 0 ? 1 : -1), true);
     x0 = y0 = null;
   }, { passive: true });
-
   window.addEventListener('hashchange', () => show(indexFromHash(), false));
+  window.addEventListener('resize', () => requestAnimationFrame(wire));
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => requestAnimationFrame(wire));
   show(indexFromHash(), false);
 })();
 </script>
