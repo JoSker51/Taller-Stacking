@@ -44,7 +44,7 @@ code(r'''
 # ============================================================
 # El CSV se lee junto al notebook; en Colab, si no se subió, se descarga del repositorio
 ruta = ('moe_db_anilist_dataset.csv' if os.path.exists('moe_db_anilist_dataset.csv')
-        else 'https://raw.githubusercontent.com/JoSker51/TallerC3_2/main/moe_db_anilist_dataset.csv')
+        else 'https://raw.githubusercontent.com/JoSker51/Taller-Stacking/main/moe_db_anilist_dataset.csv')
 df = pd.read_csv(ruta)
 df = df[df['entry_type'].notna()].copy()                      # quitamos títulos sin metadatos
 

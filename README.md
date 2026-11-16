@@ -1,5 +1,7 @@
 # C3 Taller 3 · Stacking — Yomi Level
 
+[![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/JoSker51/Taller-Stacking/blob/main/Taller_Stacking_Yomi_Level.ipynb)
+
 **Aprendizaje Supervisado · Universidad Sergio Arboleda**
 José Santiago González · Oscar Mateo Arrubla · Leonardo Diasgranados · Docente: Hernán Cruz Bueno
 
@@ -11,7 +13,7 @@ José Santiago González · Oscar Mateo Arrubla · Leonardo Diasgranados · Doce
 |---|---|
 | [`Taller_Stacking_Yomi_Level.ipynb`](Taller_Stacking_Yomi_Level.ipynb) | Notebook ejecutado y comentado |
 | [`Informe_Taller_Stacking_Yomi_Level.pdf`](Informe_Taller_Stacking_Yomi_Level.pdf) | Informe de resultados |
-| [`presentacion_stacking.html`](presentacion_stacking.html) | Presentación (abrir en el navegador; flechas para avanzar) |
+| [`presentacion_stacking.html`](presentacion_stacking.html) | Presentación (descargar y abrir en el navegador; flechas para avanzar) |
 | [`figuras/`](figuras/) | Gráficas del notebook |
 
 ## Resultados (1.807 títulos de prueba)
